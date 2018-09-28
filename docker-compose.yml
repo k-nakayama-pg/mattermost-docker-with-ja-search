@@ -1,0 +1,48 @@
+version: '3.2'
+
+services:
+
+  db:
+    build:
+      context: db
+    networks:
+      - mattermost
+    restart: always
+    command: postgres -c default_text_search_config=pg_catalog.japanese
+    volumes:
+      - /var/opt/mattermost/db/postgresql/data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=mmuser
+      - POSTGRES_PASSWORD=mmuser_password
+      - POSTGRES_DB=mattermost
+
+  app:
+    build:
+      context: app
+    networks:
+      - mattermost
+    restart: always
+    volumes:
+      - /var/opt/mattermost/app/mattermost/config:/mattermost/config
+      - /var/opt/mattermost/app/mattermost/data:/mattermost/data
+      - /var/opt/mattermost/app/mattermost/logs:/mattermost/logs
+    environment:
+      - MM_USERNAME=mmuser
+      - MM_PASSWORD=mmuser_password
+      - MM_DBNAME=mattermost
+      # in case your config is not in default location
+      # - MM_CONFIG=/mattermost/config/config.json
+    depends_on:
+      - db
+
+  web:
+    build:
+      context: web
+    networks:
+      - mattermost
+    ports:
+      - "80:80"
+    restart: always
+
+networks:
+  mattermost:
